@@ -142,7 +142,7 @@ class EnhancedCVSSScorer:
         
         # Compute final score
         final_score = base_score + exploitability_boost + impact_adjustment
-        final_score = max(0.1, min(10.0, final_score))  # Clamp to 0.1-10.0
+        final_score = max(0.0, min(10.0, final_score))  # Clamp to 0.0-10.0
         
         # Determine severity
         severity = self._score_to_severity(final_score)
