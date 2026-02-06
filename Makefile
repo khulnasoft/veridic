@@ -1,4 +1,4 @@
-.PHONY: help build run test clean install-rust install-python proto test-phase1 metrics
+.PHONY: help build run test clean install-rust install-python proto test-phase1 metrics validate
 
 help:
 	@echo "MCP Bug Bounty Server - Development Commands"
@@ -11,7 +11,9 @@ help:
 	@echo "make stop               - Stop running services"
 	@echo "make test               - Run test suite"
 	@echo "make test-phase1        - Run Phase 1 integration tests"
+	@echo "make test-determinism   - Run determinism validation tests"
 	@echo "make metrics            - Generate Phase 1 baseline metrics"
+	@echo "make validate           - Run full Phase 1 validation (all 8 steps)"
 	@echo "make logs               - View service logs"
 	@echo "make clean              - Remove build artifacts and containers"
 	@echo "make setup              - Complete development setup"
@@ -44,9 +46,17 @@ test-phase1:
 	@echo "Running Phase 1 integration tests..."
 	cd tests && python3 -m pytest test_phase1_integration.py -v
 
+test-determinism:
+	@echo "Running determinism validation tests..."
+	cd tests && python3 -m pytest test_determinism.py -v
+
 metrics:
 	@echo "Generating Phase 1 baseline metrics..."
 	cd tests && python3 generate_phase1_metrics.py
+
+validate:
+	@echo "Running full Phase 1 validation (all 8 steps)..."
+	cd tests && python3 run_validation.py
 
 logs:
 	docker-compose logs -f
