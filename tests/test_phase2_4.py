@@ -12,7 +12,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 # Import Phase 2.4 modules
 import sys
-sys.path.insert(0, '/vercel/share/v0-project/ai-service/src')
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'ai-service', 'src'))
 
 from runtime.multi_finding_aggregator import (
     MultiFinidngAggregator, AggregatedFinding, MultiAssetAggregation
