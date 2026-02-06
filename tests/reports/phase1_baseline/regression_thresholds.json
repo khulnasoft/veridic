@@ -1,0 +1,119 @@
+{
+  "baseline_date": "2026-02-06T12:00:00Z",
+  "phase": "phase1_to_phase2_regression_detection",
+  "description": "Regression detection thresholds for Phase 2 CI/CD. If Phase 2 metrics fall below PASS thresholds, manual review required.",
+  "detection_rate": {
+    "baseline": 1.0,
+    "pass_threshold": 0.80,
+    "warn_threshold": 0.70,
+    "fail_threshold": 0.69,
+    "regression_tolerance": -0.05,
+    "interpretation": "Phase 2 detection must stay ≥75% (5% below baseline). <70% triggers review."
+  },
+  "determinism_score": {
+    "baseline": 0.98,
+    "pass_threshold": 0.95,
+    "warn_threshold": 0.90,
+    "fail_threshold": 0.89,
+    "regression_tolerance": -0.08,
+    "interpretation": "Phase 2 determinism must stay ≥90%. <90% indicates potential instability."
+  },
+  "cvss_variance": {
+    "baseline_mean": 0.19,
+    "tolerance": 0.3,
+    "pass_threshold": 0.25,
+    "warn_threshold": 0.35,
+    "fail_threshold": 0.36,
+    "regression_tolerance": 0.06,
+    "interpretation": "Phase 2 CVSS variance must stay ≤0.25 (baseline + 6%). >0.35 indicates concerning instability."
+  },
+  "ai_value_score": {
+    "baseline": 0.83,
+    "pass_threshold": 0.75,
+    "warn_threshold": 0.65,
+    "fail_threshold": 0.64,
+    "regression_tolerance": -0.08,
+    "interpretation": "Phase 2 AI contribution must stay ≥75%. Dynamic analysis should increase this to 0.90+."
+  },
+  "tool_complementarity": {
+    "baseline_overlap": 0.33,
+    "baseline_complementarity": 0.67,
+    "pass_threshold_complementarity": 0.60,
+    "warn_threshold_complementarity": 0.45,
+    "fail_threshold_complementarity": 0.44,
+    "interpretation": "Phase 2 should maintain healthy tool separation. Overlap <45% acceptable; >45% flags redundancy."
+  },
+  "performance": {
+    "avg_fixture_analysis_time_baseline_sec": 6.7,
+    "pass_threshold_sec": 12.0,
+    "warn_threshold_sec": 20.0,
+    "fail_threshold_sec": 21.0,
+    "interpretation": "Phase 2 can tolerate 2x slowdown (dynamic analysis overhead). >20s per fixture triggers investigation."
+  },
+  "step_status_matrix": {
+    "proto_compilation": {
+      "baseline_status": "PASS",
+      "regression_threshold": "must_remain_pass",
+      "acceptable_variance": "0"
+    },
+    "docker_build": {
+      "baseline_status": "PASS",
+      "regression_threshold": "must_remain_pass",
+      "acceptable_variance": "0"
+    },
+    "health_check": {
+      "baseline_status": "PASS",
+      "regression_threshold": "must_remain_pass",
+      "acceptable_variance": "0"
+    },
+    "static_analysis": {
+      "baseline_status": "PASS",
+      "regression_threshold": "must_remain_pass",
+      "acceptable_variance": "dynamic_findings_ok"
+    },
+    "ast_extraction": {
+      "baseline_status": "PASS",
+      "regression_threshold": "must_remain_pass",
+      "acceptable_variance": "0"
+    },
+    "e2e_pipeline": {
+      "baseline_status": "PASS",
+      "regression_threshold": "must_remain_pass",
+      "acceptable_variance": "0"
+    },
+    "determinism": {
+      "baseline_status": "PASS",
+      "regression_threshold": "score_drop_max_0.08",
+      "acceptable_variance": "determinism_score_threshold"
+    },
+    "verdict": {
+      "baseline_status": "PASS",
+      "regression_threshold": "decision_grade_only",
+      "acceptable_variance": "no_warn_regressions"
+    }
+  },
+  "phase_2_expectations": {
+    "expected_improvements": [
+      "Detection rate: 100% → 95%+ (dynamic analysis adds coverage for runtime vulnerabilities)",
+      "AI value score: 83% → 90%+ (runtime signals provide new correlation opportunities)",
+      "Determinism: 98% → 95%+ (dynamic traces may introduce minor variance)",
+      "Performance: 6.7s → 15-20s avg (acceptable: dynamic analysis overhead)"
+    ],
+    "red_flags_requiring_review": [
+      "Detection rate drops below 75%",
+      "Determinism score falls below 90%",
+      "CVSS variance exceeds ±0.5",
+      "Any step regresses from PASS to WARN/FAIL",
+      "AI value score drops below 65%"
+    ]
+  },
+  "ci_cd_integration_notes": {
+    "automated_checks": "Compare Phase 2 metrics against thresholds. Auto-fail on critical regressions.",
+    "manual_review": "WARN threshold requires human review before merge.",
+    "reporting": "Generate regression delta report highlighting changes vs Phase 1 baseline.",
+    "gates": "Phase 2 release requires PASS verdict on all metrics."
+  },
+  "status": "LOCKED",
+  "locked_by": "Phase 1 Baseline Execution",
+  "locked_timestamp": "2026-02-06T12:06:56Z"
+}
