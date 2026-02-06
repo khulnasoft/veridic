@@ -1,0 +1,110 @@
+{
+  "vulnerable_typescript.ts": {
+    "expected_vulnerabilities": [
+      {
+        "type": "sql_injection",
+        "line": 5,
+        "severity": "critical",
+        "cwe": "CWE-89",
+        "expected_tools": ["semgrep", "codeql"]
+      },
+      {
+        "type": "xss",
+        "line": 20,
+        "severity": "high",
+        "cwe": "CWE-79",
+        "expected_tools": ["semgrep"]
+      },
+      {
+        "type": "hardcoded_credentials",
+        "line": 2,
+        "severity": "high",
+        "cwe": "CWE-798",
+        "expected_tools": ["semgrep"]
+      }
+    ],
+    "total_expected": 3,
+    "minimum_detection_rate": 0.67
+  },
+  "vulnerable_python.py": {
+    "expected_vulnerabilities": [
+      {
+        "type": "pickle_deserialization",
+        "line": 8,
+        "severity": "critical",
+        "cwe": "CWE-502",
+        "expected_tools": ["semgrep", "codeql"]
+      },
+      {
+        "type": "weak_crypto",
+        "line": 15,
+        "severity": "high",
+        "cwe": "CWE-327",
+        "expected_tools": ["semgrep"]
+      },
+      {
+        "type": "sql_injection",
+        "line": 20,
+        "severity": "critical",
+        "cwe": "CWE-89",
+        "expected_tools": ["semgrep", "codeql"]
+      }
+    ],
+    "total_expected": 3,
+    "minimum_detection_rate": 0.67
+  },
+  "vulnerable_go.go": {
+    "expected_vulnerabilities": [
+      {
+        "type": "race_condition",
+        "line": 12,
+        "severity": "high",
+        "cwe": "CWE-362",
+        "expected_tools": ["codeql"]
+      },
+      {
+        "type": "path_traversal",
+        "line": 25,
+        "severity": "high",
+        "cwe": "CWE-22",
+        "expected_tools": ["semgrep"]
+      },
+      {
+        "type": "unsafe_temporary_file",
+        "line": 30,
+        "severity": "medium",
+        "cwe": "CWE-377",
+        "expected_tools": ["semgrep"]
+      }
+    ],
+    "total_expected": 3,
+    "minimum_detection_rate": 0.67
+  },
+  "vulnerable_rust.rs": {
+    "expected_vulnerabilities": [
+      {
+        "type": "unsafe_memory_access",
+        "line": 8,
+        "severity": "critical",
+        "cwe": "CWE-119",
+        "expected_tools": ["codeql"]
+      },
+      {
+        "type": "panic_in_library",
+        "line": 15,
+        "severity": "medium",
+        "cwe": "CWE-248",
+        "expected_tools": ["semgrep"]
+      },
+      {
+        "type": "unsafe_unwrap",
+        "line": 22,
+        "severity": "medium",
+        "cwe": "CWE-248",
+        "expected_tools": ["semgrep"]
+      }
+    ],
+    "total_expected": 3,
+    "minimum_detection_rate": 0.67
+  }
+}

@@ -1,22 +1,33 @@
-.PHONY: help build run test clean install-rust install-python proto test-phase1 metrics validate
+.PHONY: help build run test clean install-rust install-python proto test-phase1 metrics validate report-determinism report-complementarity
 
 help:
 	@echo "MCP Bug Bounty Server - Development Commands"
 	@echo "==========================================="
-	@echo "make install-rust       - Install Rust dependencies"
-	@echo "make install-python     - Install Python dependencies"
-	@echo "make proto              - Generate gRPC protobuf files"
-	@echo "make build              - Build Docker images"
-	@echo "make run                - Start services with docker-compose"
-	@echo "make stop               - Stop running services"
-	@echo "make test               - Run test suite"
-	@echo "make test-phase1        - Run Phase 1 integration tests"
-	@echo "make test-determinism   - Run determinism validation tests"
-	@echo "make metrics            - Generate Phase 1 baseline metrics"
-	@echo "make validate           - Run full Phase 1 validation (all 8 steps)"
-	@echo "make logs               - View service logs"
-	@echo "make clean              - Remove build artifacts and containers"
-	@echo "make setup              - Complete development setup"
+	@echo "Setup & Infrastructure:"
+	@echo "  make install-rust       - Install Rust dependencies"
+	@echo "  make install-python     - Install Python dependencies"
+	@echo "  make proto              - Generate gRPC protobuf files"
+	@echo "  make setup              - Complete development setup"
+	@echo ""
+	@echo "Build & Run:"
+	@echo "  make build              - Build Docker images"
+	@echo "  make run                - Start services with docker-compose"
+	@echo "  make stop               - Stop running services"
+	@echo "  make logs               - View service logs"
+	@echo ""
+	@echo "Testing & Validation:"
+	@echo "  make test               - Run test suite"
+	@echo "  make test-phase1        - Run Phase 1 integration tests"
+	@echo "  make test-determinism   - Run determinism validation tests"
+	@echo "  make validate           - Run full Phase 1 validation (all 8 steps)"
+	@echo ""
+	@echo "Reporting:"
+	@echo "  make metrics            - Generate Phase 1 baseline metrics"
+	@echo "  make report-determinism - Generate determinism report"
+	@echo "  make report-complementarity - Generate tool complementarity report"
+	@echo ""
+	@echo "Other:"
+	@echo "  make clean              - Remove build artifacts and containers"
 
 install-rust:
 	cd mcp-server && cargo build
@@ -57,6 +68,18 @@ metrics:
 validate:
 	@echo "Running full Phase 1 validation (all 8 steps)..."
 	cd tests && python3 run_validation.py
+
+report-determinism:
+	@echo "Generating determinism validation report..."
+	cd tests && python3 determinism_validator.py
+
+report-complementarity:
+	@echo "Generating tool complementarity analysis report..."
+	cd tests && python3 tool_complementarity.py
+
+report-enhanced:
+	@echo "Generating enhanced PASS/WARN/FAIL report..."
+	cd tests && python3 enhanced_reporter.py
 
 logs:
 	docker-compose logs -f
