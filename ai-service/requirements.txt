@@ -9,3 +9,6 @@ numpy==1.26.3
 python-dotenv==1.0.0
 grpcio==1.60.0
 grpcio-tools==1.60.0
+astroid==3.0.1
+semgrep==1.45.0
+aiohttp==3.9.1

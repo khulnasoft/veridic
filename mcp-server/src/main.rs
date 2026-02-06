@@ -42,47 +42,101 @@ impl Mcp for McpService {
         request: Request<CodeSnippet>,
     ) -> Result<Response<VulnerabilityReport>, Status> {
         let snippet = request.into_inner();
+        let code_id = format!("code_{}", uuid::Uuid::new_v4());
         
         tracing::info!(
+            code_id = %code_id,
             language = %snippet.language,
             filename = %snippet.filename,
-            "Analyzing code snippet via AI service"
+            "Starting Phase 1 orchestrated analysis pipeline"
         );
 
         let mut ai_lock = self.ai_client.lock().unwrap();
         
         if let Some(ref mut client) = *ai_lock {
-            match client.analyze_code(
+            // Phase 1 Orchestration Pipeline:
+            // 1. Run static analysis (CodeQL + Semgrep)
+            tracing::debug!("Step 1: Running static analysis tools");
+            match client.run_static_analysis(
                 snippet.language.clone(),
                 snippet.code.clone(),
                 snippet.filename.clone(),
             ).await {
-                Ok(ai_response) => {
-                    let vulnerabilities = ai_response.vulnerabilities
-                        .into_iter()
-                        .map(|v| Vulnerability {
-                            id: format!("vuln_{}", uuid::Uuid::new_v4()),
-                            type_: v.type_,
-                            severity: v.severity,
-                            description: v.description,
-                            line_number: v.line_number,
-                            remediation: v.remediation,
-                            confidence: v.confidence,
-                        })
-                        .collect();
+                Ok(static_findings) => {
+                    tracing::info!("Static analysis found {} issues", static_findings.findings.len());
                     
-                    let report = VulnerabilityReport {
-                        code_id: ai_response.code_id,
-                        vulnerabilities,
-                        analysis_timestamp: chrono::Utc::now().to_rfc3339(),
-                        model_used: "gpt-4o".to_string(),
-                    };
-                    
-                    Ok(Response::new(report))
+                    // 2. Extract AST for code understanding
+                    tracing::debug!("Step 2: Extracting AST");
+                    match client.extract_ast(
+                        snippet.language.clone(),
+                        snippet.code.clone(),
+                        snippet.filename.clone(),
+                    ).await {
+                        Ok(ast_data) => {
+                            tracing::debug!("AST extraction complete: {} functions", ast_data.functions.len());
+                            
+                            // 3. Run AI reasoning on combined findings
+                            tracing::debug!("Step 3: Running AI reasoning");
+                            match client.reason_vulnerabilities(
+                                static_findings.findings.clone(),
+                                ast_data.ast_context.clone(),
+                                snippet.code.clone(),
+                            ).await {
+                                Ok(ai_insights) => {
+                                    tracing::debug!("AI reasoning generated {} insights", ai_insights.correlations.len());
+                                    
+                                    // 4. Generate final report
+                                    tracing::debug!("Step 4: Generating vulnerability report");
+                                    match client.generate_report(
+                                        code_id.clone(),
+                                        static_findings.findings.clone(),
+                                        ai_insights.correlations.clone(),
+                                    ).await {
+                                        Ok(report_data) => {
+                                            let vulnerabilities = report_data.vulnerabilities
+                                                .into_iter()
+                                                .map(|v| Vulnerability {
+                                                    id: format!("vuln_{}", uuid::Uuid::new_v4()),
+                                                    type_: v.type_,
+                                                    severity: v.severity,
+                                                    description: v.description,
+                                                    line_number: v.line,
+                                                    remediation: v.remediation,
+                                                    confidence: v.confidence as f32,
+                                                })
+                                                .collect();
+                                            
+                                            let final_report = VulnerabilityReport {
+                                                code_id,
+                                                vulnerabilities,
+                                                analysis_timestamp: chrono::Utc::now().to_rfc3339(),
+                                                model_used: "gpt-4o + static-analysis".to_string(),
+                                            };
+                                            
+                                            tracing::info!("Analysis complete: {} vulnerabilities found", final_report.vulnerabilities.len());
+                                            Ok(Response::new(final_report))
+                                        },
+                                        Err(e) => {
+                                            tracing::error!("Report generation error: {}", e);
+                                            Err(Status::internal(format!("Report generation error: {}", e)))
+                                        }
+                                    }
+                                },
+                                Err(e) => {
+                                    tracing::error!("AI reasoning error: {}", e);
+                                    Err(Status::internal(format!("AI reasoning error: {}", e)))
+                                }
+                            }
+                        },
+                        Err(e) => {
+                            tracing::error!("AST extraction error: {}", e);
+                            Err(Status::internal(format!("AST extraction error: {}", e)))
+                        }
+                    }
                 },
                 Err(e) => {
-                    tracing::error!("AI service error: {}", e);
-                    Err(Status::internal(format!("AI service error: {}", e)))
+                    tracing::error!("Static analysis error: {}", e);
+                    Err(Status::internal(format!("Static analysis error: {}", e)))
                 }
             }
         } else {

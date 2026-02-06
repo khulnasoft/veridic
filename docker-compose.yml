@@ -9,11 +9,17 @@ services:
       - "50051:50051"
     environment:
       RUST_LOG: info
+      AI_SERVICE_URL: http://ai-service:8000
     depends_on:
       ai-service:
         condition: service_healthy
     networks:
       - mcp-network
+    healthcheck:
+      test: ["CMD", "grpcurl", "-plaintext", "localhost:50051", "mcp.MCP/Health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   ai-service:
     build:
@@ -25,6 +31,12 @@ services:
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       AI_SERVICE_PORT: 8000
       GRPC_SERVER_URL: mcp-server:50051
+      RUST_LOG: info
+    # Install language runtimes and tools for Phase 1
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - /tmp:/tmp
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 10s

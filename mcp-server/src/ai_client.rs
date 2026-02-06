@@ -3,11 +3,11 @@ use anyhow::Result;
 use std::time::Duration;
 
 pub mod ai {
-    tonic::include_proto!("ai");
+    tonic::include_proto!("ai_service");
 }
 
 use ai::ai_service_client::AiServiceClient;
-use ai::{CodeAnalysisRequest, HealthRequest};
+use ai::{CodeAnalysisRequest, HealthRequest, StaticAnalysisRequest, AstExtractionRequest, ReasoningRequest, ReportRequest};
 
 pub struct AIServiceClient {
     client: AiServiceClient<Channel>,
@@ -25,19 +25,71 @@ impl AIServiceClient {
         })
     }
 
-    pub async fn analyze_code(
+    /// Phase 1: Step 1 - Run static analysis (CodeQL + Semgrep)
+    pub async fn run_static_analysis(
         &mut self,
         language: String,
         code: String,
         filename: String,
-    ) -> Result<ai::CodeAnalysisResponse> {
-        let request = CodeAnalysisRequest {
+    ) -> Result<ai::StaticAnalysisResponse> {
+        let request = StaticAnalysisRequest {
             language,
             code_snippet: code,
             filename,
         };
 
-        let response = self.client.analyze_code(request).await?;
+        let response = self.client.static_analysis(request).await?;
+        Ok(response.into_inner())
+    }
+
+    /// Phase 1: Step 2 - Extract AST
+    pub async fn extract_ast(
+        &mut self,
+        language: String,
+        code: String,
+        filename: String,
+    ) -> Result<ai::AstExtractionResponse> {
+        let request = AstExtractionRequest {
+            language,
+            code_snippet: code,
+            filename,
+        };
+
+        let response = self.client.extract_ast(request).await?;
+        Ok(response.into_inner())
+    }
+
+    /// Phase 1: Step 3 - AI Reasoning on combined findings
+    pub async fn reason_vulnerabilities(
+        &mut self,
+        findings: Vec<String>,
+        ast_context: String,
+        code: String,
+    ) -> Result<ai::ReasoningResponse> {
+        let request = ReasoningRequest {
+            findings,
+            ast_context,
+            code_snippet: code,
+        };
+
+        let response = self.client.reason(request).await?;
+        Ok(response.into_inner())
+    }
+
+    /// Phase 1: Step 4 - Generate final report
+    pub async fn generate_report(
+        &mut self,
+        code_id: String,
+        findings: Vec<String>,
+        correlations: Vec<String>,
+    ) -> Result<ai::ReportResponse> {
+        let request = ReportRequest {
+            code_id,
+            findings,
+            correlations,
+        };
+
+        let response = self.client.generate_report(request).await?;
         Ok(response.into_inner())
     }
 
