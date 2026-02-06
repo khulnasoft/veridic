@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  mcp-server:
+    build:
+      context: .
+      dockerfile: mcp-server/Dockerfile
+    ports:
+      - "50051:50051"
+    environment:
+      RUST_LOG: info
+    depends_on:
+      ai-service:
+        condition: service_healthy
+    networks:
+      - mcp-network
+
+  ai-service:
+    build:
+      context: .
+      dockerfile: ai-service/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      AI_SERVICE_PORT: 8000
+      GRPC_SERVER_URL: mcp-server:50051
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - mcp-network
+
+networks:
+  mcp-network:
+    driver: bridge

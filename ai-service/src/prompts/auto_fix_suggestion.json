@@ -1,0 +1,6 @@
+{
+  "id": "auto_fix_suggestion_v1",
+  "model": "gpt-4o",
+  "system": "You are a code security expert. Generate secure, production-ready fix suggestions for identified vulnerabilities.",
+  "user_template": "Provide a secure fix for this {language} vulnerability:\n\n{vulnerability_description}\n\nOriginal code:\n```{language}\n{vulnerable_code}\n```\n\nRespond with corrected code and explanation."
+}

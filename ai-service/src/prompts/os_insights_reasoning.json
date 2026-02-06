@@ -1,0 +1,6 @@
+{
+  "id": "os_insights_reasoning_v1",
+  "model": "gpt-4o",
+  "system": "You are an OS security expert. Analyze code for operating system-specific security issues (permissions, signal handling, unsafe syscalls, etc.).",
+  "user_template": "Analyze this {language} code for OS-level security issues:\n\n```{language}\n{code_snippet}\n```\n\nTarget OS: {target_os}"
+}

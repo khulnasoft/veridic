@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package mcp;
+
+message CodeSnippet {
+    string language = 1;
+    string code = 2;
+    string filename = 3;
+}
+
+message Vulnerability {
+    string id = 1;
+    string type = 2;
+    string severity = 3;
+    string description = 4;
+    int32 line_number = 5;
+    string remediation = 6;
+    float confidence = 7;
+}
+
+message VulnerabilityReport {
+    string code_id = 1;
+    repeated Vulnerability vulnerabilities = 2;
+    string analysis_timestamp = 3;
+    string model_used = 4;
+}
+
+message QueryRequest {
+    string filter = 1;
+    int32 limit = 2;
+}
+
+message Empty {}
+
+message HealthResponse {
+    string status = 1;
+    string version = 2;
+}
+
+service MCP {
+    rpc AnalyzeCode(CodeSnippet) returns (VulnerabilityReport);
+    rpc GetVulnerabilities(QueryRequest) returns (stream Vulnerability);
+    rpc Health(Empty) returns (HealthResponse);
+}

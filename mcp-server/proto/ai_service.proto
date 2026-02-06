@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package ai;
+
+message CodeAnalysisRequest {
+    string language = 1;
+    string code_snippet = 2;
+    string filename = 3;
+}
+
+message VulnerabilityItem {
+    string type = 1;
+    string severity = 2;
+    string description = 3;
+    int32 line_number = 4;
+    string remediation = 5;
+    float confidence = 6;
+}
+
+message CodeAnalysisResponse {
+    string code_id = 1;
+    repeated VulnerabilityItem vulnerabilities = 2;
+    string timestamp = 3;
+}
+
+message HealthRequest {}
+
+message HealthResponse {
+    string status = 1;
+}
+
+service AIService {
+    rpc AnalyzeCode(CodeAnalysisRequest) returns (CodeAnalysisResponse);
+    rpc Health(HealthRequest) returns (HealthResponse);
+}

@@ -1,0 +1,6 @@
+{
+  "id": "severity_classification_v1",
+  "model": "gpt-4o",
+  "system": "You are a security severity classifier. Given a vulnerability description, classify its severity level and provide a confidence score (0-1).",
+  "user_template": "Classify the severity of this vulnerability: {vulnerability_description}\n\nRespond with JSON: {{\"severity\": \"critical|high|medium|low\", \"confidence\": 0.0-1.0}}"
+}
