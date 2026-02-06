@@ -1,0 +1,90 @@
+{
+  "verdict_reasoning": {
+    "id": "verdict_reasoning_v1",
+    "version": "1.0",
+    "temperature": 0,
+    "model": "gpt-4o",
+    "system_prompt": "You are a security vulnerability verdict engine. You reason over structured evidence to determine if vulnerabilities are exploitable. You MUST:\n1. Only reference static findings and runtime events provided in input\n2. Base every verdict on evidence, cite specific events/findings\n3. Use the provided CVSS mapping rubric\n4. Return JSON matching the schema\n5. Never introduce facts not in evidence\n\nBe precise, deterministic, and evidence-driven.",
+    "user_prompt_template": "Analyze these vulnerabilities and runtime evidence. Return a verdict for each finding.\n\nStatic Findings:\n{static_findings}\n\nRuntime Evidence Chains:\n{evidence_chains}\n\nConflicting Findings:\n{conflicting_findings}\n\nFor each finding, provide:\n- verdict: CONFIRMED|UPGRADED|DOWNGRADED|CONFLICTED|INSUFFICIENT\n- severity: critical|high|medium|low|info\n- confidence: 0-100\n- reasoning: cite evidence (finding_id, event_id, syscall_name, network_details)\n\nReturn only valid JSON matching this schema:\n{\n  \"findings_verdicts\": {\n    \"finding_id\": {\n      \"verdict\": \"string\",\n      \"severity\": \"string\",\n      \"confidence\": number,\n      \"reasoning\": \"string (must cite evidence)\"\n    }\n  },\n  \"conflicts_resolved\": {\n    \"conflict_id\": \"resolution_type\"\n  }\n}"
+  },
+  "severity_mapping": {
+    "static_only": {
+      "critical": "critical",
+      "high": "high",
+      "medium": "medium",
+      "low": "low"
+    },
+    "static_plus_runtime_supports": {
+      "critical": "critical",
+      "high": "critical",
+      "medium": "high",
+      "low": "medium"
+    },
+    "static_plus_runtime_refutes": {
+      "critical": "medium",
+      "high": "low",
+      "medium": "info",
+      "low": "info"
+    },
+    "insufficient_evidence": "unknown"
+  },
+  "conflict_resolution": {
+    "id": "conflict_resolution_v1",
+    "version": "1.0",
+    "temperature": 0,
+    "rules": {
+      "static_vs_runtime_precedence": "If static finding HIGH and runtime evidence LOW/none: downgrade to MEDIUM with justification. If runtime evidence is CRITICAL (e.g., execve with user input), upgrade finding to CRITICAL.",
+      "upgrade_rules": {
+        "on_exploit_chain_detected": "If evidence chain proves exploit path (e.g., SQL injection → successful query), upgrade by 1 level",
+        "on_multiple_corroborating_events": "If 3+ independent runtime events support finding, upgrade by 1 level",
+        "on_network_exfiltration": "If finding + file read + network egress detected, mark CRITICAL"
+      },
+      "downgrade_rules": {
+        "on_no_runtime_evidence": "If no runtime evidence after 5min sandbox execution, downgrade by 1 level",
+        "on_negative_proof": "If runtime evidence contradicts (e.g., input sanitized before use), downgrade by 2 levels",
+        "on_auth_required_but_not_bypassed": "If finding requires auth and no auth bypass shown, downgrade by 1 level"
+      }
+    }
+  },
+  "cvss_mapping": {
+    "id": "cvss_mapping_v1",
+    "version": "1.0",
+    "rules": {
+      "critical": {
+        "av": "CVSS:3.1/AV:N/PR:N/UI:N/S:U/C:H/I:H/A:H",
+        "base_score": 9.8,
+        "description": "Actively exploited, remote, requires no privileges or user interaction"
+      },
+      "high": {
+        "av": "CVSS:3.1/AV:N/PR:L/UI:N/S:U/C:H/I:H/A:H",
+        "base_score": 8.8,
+        "description": "Remote, requires low privileges, complete compromise"
+      },
+      "medium": {
+        "av": "CVSS:3.1/AV:N/PR:L/UI:R/S:U/C:H/I:N/A:N",
+        "base_score": 5.7,
+        "description": "Requires user interaction or local access"
+      },
+      "low": {
+        "av": "CVSS:3.1/AV:L/PR:L/UI:N/S:U/C:L/I:N/A:N",
+        "base_score": 3.3,
+        "description": "Local access required, limited impact"
+      },
+      "info": {
+        "av": "CVSS:3.1/AV:N/PR:N/UI:N/S:U/C:L/I:N/A:N",
+        "base_score": 5.3,
+        "description": "Information disclosure, no compromise"
+      }
+    }
+  },
+  "evidence_citation": {
+    "id": "evidence_citation_v1",
+    "version": "1.0",
+    "rules": {
+      "required_for_verdict": "Every verdict MUST cite at least 1 static finding + 1 runtime event (if available)",
+      "citation_format": "Use finding_id, event_id, syscall_name, network_source/dest format",
+      "acceptable_citation": "e.g., 'finding_id=sql_001 confirmed by event_id=syscall_42 (execve=/bin/sh) and event_id=net_15 (HTTP request to 127.0.0.1:3306)'",
+      "forbidden": "Do not reference findings or events not in input"
+    }
+  }
+}
