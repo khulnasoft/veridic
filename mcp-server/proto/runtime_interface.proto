@@ -1,0 +1,205 @@
+syntax = "proto3";
+
+package runtime;
+
+// ============================================================================
+// Phase 2.0: Runtime Analysis Interface Contracts
+// ============================================================================
+// Define gRPC service boundaries for dynamic analysis without premature
+// engine coupling. Collectors, trace storage, and correlation are decoupled.
+// ============================================================================
+
+// === SANDBOX EXECUTION ===
+
+message SandboxConfig {
+  string language = 1;              // typescript|python|go|rust
+  string code_snippet = 2;
+  string filename = 3;
+  repeated string environment_vars = 4;
+  int32 timeout_seconds = 5;
+  string sandbox_id = 6;            // UUID for determinism tracing
+}
+
+message SandboxSession {
+  string session_id = 1;
+  string status = 2;                // active|completed|failed
+  int64 started_at = 3;             // Unix timestamp
+  string sandbox_id = 4;
+}
+
+// === RUNTIME EVENTS ===
+
+message RuntimeEvent {
+  string event_id = 1;              // UUID
+  int64 timestamp = 2;              // Unix timestamp (ns)
+  string source = 3;                // ebpf|dtrace|mitmproxy|memory
+  string event_type = 4;            // syscall|network|file_access|memory_op
+  
+  // Event payload (one of)
+  oneof details {
+    SyscallEvent syscall = 5;
+    NetworkEvent network = 6;
+    FileAccessEvent file_access = 7;
+    MemoryEvent memory = 8;
+  }
+  
+  double confidence = 9;            // 0.0-1.0 confidence score
+  string collector_version = 10;    // semver
+  string sandbox_id = 11;           // UUID for determinism
+  repeated string related_static_findings = 12;  // vuln_id references
+}
+
+message SyscallEvent {
+  int32 syscall_number = 1;
+  string syscall_name = 2;          // e.g., "open", "execve"
+  repeated string args = 3;
+  int32 return_value = 4;
+  int32 errno = 5;
+  string process_name = 6;
+  int32 pid = 7;
+  int32 uid = 8;
+}
+
+message NetworkEvent {
+  string direction = 1;             // inbound|outbound
+  string protocol = 2;              // tcp|udp|tls
+  string src_ip = 3;
+  int32 src_port = 4;
+  string dst_ip = 5;
+  int32 dst_port = 6;
+  string method = 7;                // HTTP verb
+  string path = 8;
+  string host = 9;
+  repeated string headers = 10;
+  string body = 11;
+  int32 response_code = 12;
+}
+
+message FileAccessEvent {
+  string operation = 1;             // open|read|write|delete
+  string path = 2;
+  string mode = 3;                  // r|w|rw
+  int64 size = 4;
+  bool permission_denied = 5;
+}
+
+message MemoryEvent {
+  string operation = 1;             // alloc|free|access|overflow
+  int64 address = 2;
+  int64 size = 3;
+  string data_type = 4;
+  bool out_of_bounds = 5;
+  string backtrace = 6;
+}
+
+// === EXECUTION REQUEST ===
+
+message ExecutionRequest {
+  SandboxConfig config = 1;
+  string code_id = 2;               // Link to Phase 1 analysis
+  repeated string targeted_findings = 3;  // Filter events to these vuln IDs
+  bool capture_network = 4;
+  bool capture_syscalls = 5;
+  bool capture_memory = 6;
+}
+
+// === CORRELATION ===
+
+message CorrelationRequest {
+  string code_id = 1;
+  repeated RuntimeEvent events = 2;
+  repeated string static_findings = 3;  // From Phase 1
+}
+
+message CorrelatedFinding {
+  string finding_id = 1;
+  string original_type = 2;
+  string original_severity = 3;
+  
+  repeated RuntimeEvent supporting_events = 4;
+  double exploitability_score = 5;  // 0-100
+  string attack_chain = 6;
+  repeated string event_chain = 7;  // event_id sequence
+  
+  // Resolution verdict
+  string resolved_severity = 8;     // Critical|High|Medium|Low|Info
+  string resolution_reasoning = 9;
+  bool is_exploitable = 10;
+}
+
+message CorrelatedFindings {
+  repeated CorrelatedFinding findings = 1;
+  int32 total_events_analyzed = 2;
+  int32 events_matched = 3;
+  int32 events_unmatched = 4;
+  double determinism_score = 5;     // 0.0-1.0
+}
+
+// === CONFLICT RESOLUTION ===
+
+message ConflictRequest {
+  string finding_id = 1;
+  string static_severity = 2;
+  string ai_suggested_severity = 3;
+  repeated RuntimeEvent runtime_evidence = 4;
+}
+
+message ResolutionVerdict {
+  string finding_id = 1;
+  string final_severity = 2;
+  string resolution_rule = 3;
+  string reasoning = 4;
+  double confidence = 5;
+}
+
+// === SERVICE DEFINITION ===
+
+service RuntimeAnalysis {
+  // Sandbox lifecycle
+  rpc StartSandbox(SandboxConfig) returns (SandboxSession);
+  rpc StopSandbox(SandboxSession) returns (google.protobuf.Empty);
+  
+  // Runtime event collection
+  rpc ExecuteWithTracing(ExecutionRequest) returns (stream RuntimeEvent);
+  
+  // Trace storage & querying
+  rpc GetEvents(EventQuery) returns (stream RuntimeEvent);
+  rpc SaveTrace(TraceData) returns (TraceID);
+  
+  // Correlation & verdict
+  rpc CorrelateFindings(CorrelationRequest) returns (CorrelatedFindings);
+  rpc ResolveConflict(ConflictRequest) returns (ResolutionVerdict);
+  
+  // Health
+  rpc Health(google.protobuf.Empty) returns (HealthStatus);
+}
+
+// Supporting message types for querying
+
+message EventQuery {
+  string sandbox_id = 1;
+  int64 start_timestamp = 2;
+  int64 end_timestamp = 3;
+  string event_type_filter = 4;
+  repeated string related_findings = 5;
+}
+
+message TraceData {
+  string sandbox_id = 1;
+  repeated RuntimeEvent events = 2;
+  string execution_id = 3;
+}
+
+message TraceID {
+  string trace_id = 1;
+  int32 event_count = 2;
+}
+
+message HealthStatus {
+  string status = 1;
+  string sandbox_manager = 2;
+  string trace_store = 3;
+  string collector_status = 4;
+}
+
+import "google/protobuf/empty.proto";
