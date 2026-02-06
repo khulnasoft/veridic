@@ -1,4 +1,4 @@
-.PHONY: help build run test clean install-rust install-python proto test-phase1 metrics validate report-determinism report-complementarity
+.PHONY: help build run test clean install-rust install-python proto test-phase1 metrics validate validate-unified report-determinism report-complementarity report-attribution report-verdict report-aggregated
 
 help:
 	@echo "MCP Bug Bounty Server - Development Commands"
@@ -19,12 +19,16 @@ help:
 	@echo "  make test               - Run test suite"
 	@echo "  make test-phase1        - Run Phase 1 integration tests"
 	@echo "  make test-determinism   - Run determinism validation tests"
-	@echo "  make validate           - Run full Phase 1 validation (all 8 steps)"
+	@echo "  make validate           - Run full Phase 1 validation"
+	@echo "  make validate-unified   - Run unified validation harness (8 steps)"
 	@echo ""
 	@echo "Reporting:"
 	@echo "  make metrics            - Generate Phase 1 baseline metrics"
 	@echo "  make report-determinism - Generate determinism report"
 	@echo "  make report-complementarity - Generate tool complementarity report"
+	@echo "  make report-attribution - Generate tool attribution metrics"
+	@echo "  make report-verdict     - Generate final verdict report"
+	@echo "  make report-aggregated  - Generate aggregated phase1 report"
 	@echo ""
 	@echo "Other:"
 	@echo "  make clean              - Remove build artifacts and containers"
@@ -69,13 +73,29 @@ validate:
 	@echo "Running full Phase 1 validation (all 8 steps)..."
 	cd tests && python3 run_validation.py
 
+validate-unified:
+	@echo "Running unified Phase 1 validation harness..."
+	@bash scripts/validate_phase1_unified.sh
+
 report-determinism:
 	@echo "Generating determinism validation report..."
-	cd tests && python3 determinism_validator.py
+	cd tests && python3 determinism.py
 
 report-complementarity:
 	@echo "Generating tool complementarity analysis report..."
 	cd tests && python3 tool_complementarity.py
+
+report-attribution:
+	@echo "Generating tool attribution metrics report..."
+	cd tests && python3 tool_attribution_metrics.py
+
+report-verdict:
+	@echo "Generating final verdict report..."
+	cd tests && python3 final_verdict.py
+
+report-aggregated:
+	@echo "Generating aggregated Phase 1 report..."
+	cd tests && python3 phase1_metrics_aggregator.py
 
 report-enhanced:
 	@echo "Generating enhanced PASS/WARN/FAIL report..."
