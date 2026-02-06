@@ -10,3 +10,10 @@ node_modules/
 .next/
 .env*.local
 .DS_Store
+target/
+venv/*
+.venv/
+dist/
+__pycache__/
+*.pyc
+*.pyo

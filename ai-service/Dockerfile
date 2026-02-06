@@ -27,7 +27,7 @@ RUN wget -q https://github.com/github/codeql-cli-binaries/releases/latest/downlo
 # Install Node.js packages for TypeScript AST extraction
 RUN npm install -g typescript @typescript-eslint/parser
 
-COPY requirements.txt .
+COPY ai-service/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
