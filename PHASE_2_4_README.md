@@ -458,9 +458,14 @@ for asset_id, findings in batch_agg.findings_per_asset.items():
 
 # Step 3: Batch AI reasoning
 engine = BatchInferenceEngine(temperature=0.0)
+findings_map = {}
+for asset_findings in batch_agg.findings_per_asset.values():
+    for f in asset_findings:
+        findings_map[f.aggregation_id] = f.to_dict()
+
 batch_input = BatchInferenceInput(
     batch_id="batch_001",
-    findings={f["aggregation_id"]: f for f in batch_agg.findings_per_asset.values()},
+    findings=findings_map,
     scores={k: {"final_score": v.final_score} for k, v in scores.items()},
 )
 inference_result = await engine.reason_batch(batch_input)
