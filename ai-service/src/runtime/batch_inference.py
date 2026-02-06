@@ -345,14 +345,16 @@ Verdict severity and confidence:"""
             rationale = response.get("rationale", "")
             reasoning_chain = response.get("reasoning_chain", [])
             
+            clamped_confidence = max(0.0, min(1.0, confidence))
+
             verdict = AIVerdict(
                 aggregation_id=agg_id,
                 original_severity=finding.get("severity", "medium"),
                 ai_verdict_severity=verdict_severity,
-                confidence=max(0.0, min(1.0, confidence)),  # Clamp to 0-1
+                confidence=clamped_confidence,
                 rationale=rationale,
                 reasoning_chain=reasoning_chain if isinstance(reasoning_chain, list) else [],
-                requires_review=confidence < 0.7,
+                requires_review=clamped_confidence < 0.7,
             )
         except Exception as e:
             logger.error(f"Error parsing AI response for {agg_id}: {e}")
