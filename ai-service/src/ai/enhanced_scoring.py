@@ -289,7 +289,7 @@ class ScoringBatchProcessor:
                 score = self.scorer.score_aggregated_finding(inputs[agg_id])
                 results[agg_id] = score
             except Exception as e:
-                logger.error(f"Error scoring {agg_id}: {e}")
+                logger.exception(f"Error scoring {agg_id}")
                 # Return default score on error
                 results[agg_id] = EnhancedScore(
                     base_score=5.0,
