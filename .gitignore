@@ -17,3 +17,45 @@ dist/
 __pycache__/
 *.pyc
 *.pyo
+# Build artifacts
+*.log
+build_errors*.log
+*.zip
+protoc_temp/
+local_bin/
+
+# Python
+*.pyc
+__pycache__/
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+venv/
+.env
+
+# Rust
+target/
+Cargo.lock
+
+# Node
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*_new.*

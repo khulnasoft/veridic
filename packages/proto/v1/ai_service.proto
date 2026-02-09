@@ -1,0 +1,128 @@
+syntax = "proto3";
+
+package ai_service;
+
+// Phase 1: Static Analysis Request/Response
+message StaticAnalysisRequest {
+    string language = 1;
+    string code_snippet = 2;
+    string filename = 3;
+}
+
+message StaticFinding {
+    string tool = 1;
+    string rule_id = 2;
+    string type = 3;
+    string message = 4;
+    int32 line = 5;
+    int32 column = 6;
+    double confidence = 7;
+    string severity = 8;
+    string code_snippet = 9;
+    string remediation_hint = 10;
+}
+
+message StaticAnalysisResponse {
+    repeated StaticFinding findings = 1;
+    int32 analysis_time_ms = 2;
+}
+
+// Phase 1: AST Extraction Request/Response
+message AstExtractionRequest {
+    string language = 1;
+    string code_snippet = 2;
+    string filename = 3;
+}
+
+message AstExtractionResponse {
+    int32 functions = 1;
+    int32 variables = 2;
+    int32 dataflow_items = 3;
+    string ast_context = 4;  // JSON serialized AST
+}
+
+// Phase 1: AI Reasoning Request/Response
+message ReasoningRequest {
+    repeated StaticFinding findings = 1;
+    string ast_context = 2;
+    string code_snippet = 3;
+}
+
+message VulnerabilityCorrelation {
+    repeated string vulnerability_ids = 1;
+    float exploitability = 2;
+    string attack_scenario = 3;
+    string impact = 4;
+    bool requires_auth = 5;
+}
+
+message ReasoningResponse {
+    repeated VulnerabilityCorrelation correlations = 1;
+    string reasoning_notes = 2;
+}
+
+// Phase 1: Report Generation Request/Response
+message ReportRequest {
+    string code_id = 1;
+    repeated StaticFinding findings = 2;
+    repeated VulnerabilityCorrelation correlations = 3;
+}
+
+message ReportVulnerability {
+    string id = 1;
+    string type = 2;
+    string severity = 3;
+    string description = 4;
+    int32 line = 5;
+    string remediation = 6;
+    double confidence = 7;
+    string cvss_vector = 8;
+    double cvss_score = 9;
+}
+
+message ReportResponse {
+    repeated ReportVulnerability vulnerabilities = 1;
+    string json_report = 2;
+    string markdown_report = 3;
+    string sarif_report = 4;
+}
+
+// Legacy Analysis (backward compat)
+message CodeAnalysisRequest {
+    string language = 1;
+    string code_snippet = 2;
+    string filename = 3;
+}
+
+message VulnerabilityItem {
+    string type = 1;
+    string severity = 2;
+    string description = 3;
+    int32 line_number = 4;
+    string remediation = 5;
+    float confidence = 6;
+}
+
+message CodeAnalysisResponse {
+    string code_id = 1;
+    repeated VulnerabilityItem vulnerabilities = 2;
+    string timestamp = 3;
+}
+
+message HealthRequest {}
+
+message HealthResponse {
+    string status = 1;
+}
+
+service AiService {
+    // Phase 1 Methods
+    rpc StaticAnalysis(StaticAnalysisRequest) returns (StaticAnalysisResponse);
+    rpc ExtractAst(AstExtractionRequest) returns (AstExtractionResponse);
+    rpc Reason(ReasoningRequest) returns (ReasoningResponse);
+    rpc GenerateReport(ReportRequest) returns (ReportResponse);
+    
+    // Legacy
+    rpc AnalyzeCode(CodeAnalysisRequest) returns (CodeAnalysisResponse);
+    rpc Health(HealthRequest) returns (HealthResponse);
+}
